@@ -47,7 +47,9 @@ def perform_test(test_loader, model, test_meter, cfg, writer=None):
     model.eval()
     test_meter.iter_tic()
 
-    for cur_iter, (inputs, labels, video_idx, time, meta) in enumerate(test_loader):
+    for cur_iter, (inputs, labels, video_idx, time, meta) in enumerate(
+        test_loader
+    ):
         if cfg.NUM_GPUS:
             # Transfer the data to the current GPU device.
             if isinstance(inputs, (list,)):
@@ -73,8 +75,12 @@ def perform_test(test_loader, model, test_meter, cfg, writer=None):
             metadata = meta["metadata"]
 
             preds = preds.detach().cpu() if cfg.NUM_GPUS else preds.detach()
-            ori_boxes = ori_boxes.detach().cpu() if cfg.NUM_GPUS else ori_boxes.detach()
-            metadata = metadata.detach().cpu() if cfg.NUM_GPUS else metadata.detach()
+            ori_boxes = (
+                ori_boxes.detach().cpu() if cfg.NUM_GPUS else ori_boxes.detach()
+            )
+            metadata = (
+                metadata.detach().cpu() if cfg.NUM_GPUS else metadata.detach()
+            )
 
             if cfg.NUM_GPUS > 1:
                 preds = torch.cat(du.all_gather_unaligned(preds), dim=0)
@@ -124,7 +130,9 @@ def perform_test(test_loader, model, test_meter, cfg, writer=None):
 
         if not cfg.VIS_MASK.ENABLE:
             # Update and log stats.
-            test_meter.update_stats(preds.detach(), labels.detach(), video_idx.detach())
+            test_meter.update_stats(
+                preds.detach(), labels.detach(), video_idx.detach()
+            )
         test_meter.log_iter_stats(cur_iter)
 
         test_meter.iter_tic()
@@ -146,7 +154,9 @@ def perform_test(test_loader, model, test_meter, cfg, writer=None):
                 with pathmgr.open(save_path, "wb") as f:
                     pickle.dump([all_preds, all_labels], f)
 
-            logger.info("Successfully saved prediction results to {}".format(save_path))
+            logger.info(
+                "Successfully saved prediction results to {}".format(save_path)
+            )
 
     test_meter.finalize_metrics()
     return test_meter
@@ -184,7 +194,9 @@ def test(cfg):
         flops, params = 0.0, 0.0
         if du.is_master_proc() and cfg.LOG_MODEL_INFO:
             model.eval()
-            flops, params = misc.log_model_info(model, cfg, use_train_input=False)
+            flops, params = misc.log_model_info(
+                model, cfg, use_train_input=False
+            )
 
         if du.is_master_proc() and cfg.LOG_MODEL_INFO:
             misc.log_model_info(model, cfg, use_train_input=False)
@@ -230,7 +242,9 @@ def test(cfg):
             )
 
         # Set up writer for logging to Tensorboard format.
-        if cfg.TENSORBOARD.ENABLE and du.is_master_proc(cfg.NUM_GPUS * cfg.NUM_SHARDS):
+        if cfg.TENSORBOARD.ENABLE and du.is_master_proc(
+            cfg.NUM_GPUS * cfg.NUM_SHARDS
+        ):
             writer = tb.TensorboardWriter(cfg)
         else:
             writer = None
@@ -249,10 +263,12 @@ def test(cfg):
                 view, cfg.TEST.NUM_SPATIAL_CROPS
             )
         )
-        result_string_views += "_{}a{}" "".format(view, test_meter.stats["top1_acc"])
+        result_string_views += "_{}a{}".format(
+            view, test_meter.stats["top1_acc"]
+        )
 
         result_string = (
-            "_p{:.2f}_f{:.2f}_{}a{} Top5 Acc: {} MEM: {:.2f} f: {:.4f}" "".format(
+            "_p{:.2f}_f{:.2f}_{}a{} Top5 Acc: {} MEM: {:.2f} f: {:.4f}".format(
                 params / 1e6,
                 flops,
                 view,
